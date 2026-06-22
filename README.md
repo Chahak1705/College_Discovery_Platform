@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# College Discovery Platform
 
-## Getting Started
+A production-grade backend API for a college discovery and decision-making platform.
 
-First, run the development server:
+## Live URL
+https://college-discovery-sooty.vercel.app
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tech Stack
+- **Framework:** Next.js 16 + TypeScript
+- **Database:** PostgreSQL (Neon Cloud)
+- **ORM:** Prisma
+- **Auth:** JWT + bcrypt
+- **Deployment:** Vercel
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## API Endpoints
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Colleges
+- `GET /api/colleges` — List all colleges with search, filter, pagination
+- `GET /api/colleges/:id` — Get college detail
+- `GET /api/colleges/compare?ids=1,2,3` — Compare colleges
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Auth
+- `POST /api/auth/signup` — Register user
+- `POST /api/auth/login` — Login, get JWT token
 
-## Learn More
+### Saved Colleges (Protected)
+- `POST /api/colleges/save` — Save a college
+- `GET /api/user/saved` — Get saved colleges
 
-To learn more about Next.js, take a look at the following resources:
+### Predictor
+- `GET /api/predictor?exam=JEE&rank=75&category=General` — Get eligible colleges
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Features
+- Search by name
+- Filter by state, fees
+- Pagination
+- JWT Authentication
+- College comparison
+- Rank-based predictor
+- Proper error handling
