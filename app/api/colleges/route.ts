@@ -1,69 +1,44 @@
 import { NextResponse, NextRequest } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { getUserFromToken } from "@/lib/auth"
 import { handleError } from "@/lib/apiError"
 
 const prisma = new PrismaClient()
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const user = getUserFromToken(request)
+    const { searchParams } = new URL(request.url)
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please login first" },
-        { status: 401 }
-      )
+    const search = searchParams.get("search")
+    const state = searchParams.get("state")
+    const maxFees = searchParams.get("maxFees")
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "10")
+    const skip = (page - 1) * limit
+
+    const where = {
+      AND: [
+        search ? { name: { contains: search, mode: "insensitive" as const } } : {},
+        state ? { state: state } : {},
+        maxFees ? { fees: { lte: parseInt(maxFees) } } : {},
+      ]
     }
 
-    const body = await request.json()
-    const { collegeId } = body
-
-    if (!collegeId) {
-      return NextResponse.json(
-        { error: "College ID is required" },
-        { status: 400 }
-      )
-    }
-
-    const college = await prisma.college.findUnique({
-      where: { id: collegeId }
-    })
-
-    if (!college) {
-      return NextResponse.json(
-        { error: "College not found" },
-        { status: 404 }
-      )
-    }
-
-    const alreadySaved = await prisma.savedCollege.findUnique({
-      where: {
-        userId_collegeId: {
-          userId: user.userId,
-          collegeId
-        }
-      }
-    })
-
-    if (alreadySaved) {
-      return NextResponse.json(
-        { error: "College already saved" },
-        { status: 400 }
-      )
-    }
-
-    const saved = await prisma.savedCollege.create({
-      data: {
-        userId: user.userId,
-        collegeId
-      }
-    })
+    const [colleges, total] = await Promise.all([
+      prisma.college.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { rating: "desc" }
+      }),
+      prisma.college.count({ where })
+    ])
 
     return NextResponse.json({
-      message: "College saved successfully",
-      saved
-    }, { status: 201 })
+      data: colleges,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    })
 
   } catch (error) {
     return handleError(error)
