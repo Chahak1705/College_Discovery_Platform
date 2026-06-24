@@ -1,8 +1,10 @@
 import { NextResponse, NextRequest } from "next/server"
+import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import { prisma } from "@/lib/prisma" // Corrected: Uses our safe database singleton pool
 import { handleError } from "@/lib/apiError"
+
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,15 +38,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Defensive Check: Enforce that JWT_SECRET must exist in production environment variables
-    const jwtSecret = process.env.JWT_SECRET
-    if (!jwtSecret) {
-      throw new Error("JWT_SECRET environment variable is completely missing on the server.")
-    }
-
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      jwtSecret, // Secure: Will never fallback to a compromised default string
+      process.env.JWT_SECRET || "secret",
       { expiresIn: "7d" }
     )
 

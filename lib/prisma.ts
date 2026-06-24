@@ -1,13 +1,12 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  typescript: {
-    // TypeScript errors ko production build ke waqt ignore karega
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    // ESLint validation check build phase par completely bypass karega
-    ignoreDuringBuilds: true,
-  },
-};
+import { PrismaClient } from "@prisma/client"
 
-module.exports = nextConfig;
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+
+export const prisma =
+  globalForPrisma.prisma ?? new PrismaClient()
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma
+}

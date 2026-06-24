@@ -1,8 +1,8 @@
 import { NextResponse, NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client" // 👈 DIRECT FROM PRISMA CLIENT
+import { prisma } from "@/lib/prisma" // 👈 DIRECT FROM PRISMA CLIENT
 import { handleError } from "@/lib/apiError"
 
-const prisma = new PrismaClient() // 👈 INSTANTIATE DIRECTLY FOR DEV/DEMO FAST PASS
+ // 👈 INSTANTIATE DIRECTLY FOR DEV/DEMO FAST PASS
 
 export async function GET(request: NextRequest) {
   try {
