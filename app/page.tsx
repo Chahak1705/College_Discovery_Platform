@@ -1,108 +1,84 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type College = {
+  id: number;
+  name: string;
+  location: string;
+  fees: number;
+  rating: number;
+};
+
 export default function Home() {
-  const endpoints = [
-    {
-      name: "College Listing",
-      url: "/api/colleges",
-      method: "GET",
-    },
-    {
-      name: "College Details",
-      url: "/api/colleges/{id}",
-      method: "GET",
-    },
-    {
-      name: "Compare Colleges",
-      url: "/api/colleges/compare?ids=16,17",
-      method: "GET",
-    },
-    {
-      name: "Predictor",
-      url: "/api/predictor",
-      method: "POST",
-    },
-    {
-      name: "Login",
-      url: "/api/auth/login",
-      method: "POST",
-    },
-    {
-      name: "Signup",
-      url: "/api/auth/signup",
-      method: "POST",
-    },
-  ];
+  const [colleges, setColleges] = useState<College[]>([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetch("/api/colleges")
+      .then((res) => res.json())
+      .then((data) => setColleges(data.data || []))
+      .catch(console.error);
+  }, []);
+
+  const filtered = colleges.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-5xl font-bold mb-3">
-          🎓 College Discovery Platform
-        </h1>
+    <main className="min-h-screen bg-gray-100 p-8">
+      <h1 className="text-4xl font-bold text-center mb-2">
+        🎓 College Discovery Platform
+      </h1>
 
-        <p className="text-lg text-gray-300 mb-8">
-          Backend Engineer Demo built with Next.js, TypeScript, PostgreSQL,
-          Prisma ORM and JWT Authentication.
-        </p>
+      <p className="text-center text-gray-600 mb-8">
+        Backend Engineer Demo • Next.js • Prisma • PostgreSQL
+      </p>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-slate-800 rounded-xl p-6 shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">
-              🚀 Implemented Features
-            </h2>
+      <div className="max-w-2xl mx-auto mb-8">
+        <input
+          className="w-full border rounded-lg p-3"
+          placeholder="Search colleges..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
-            <ul className="space-y-2 text-gray-300">
-              <li>✅ College Listing & Search</li>
-              <li>✅ College Detail API</li>
-              <li>✅ Compare Colleges</li>
-              <li>✅ Rank Predictor</li>
-              <li>✅ JWT Authentication</li>
-              <li>✅ Saved Colleges</li>
-              <li>✅ PostgreSQL + Prisma ORM</li>
-            </ul>
-          </div>
+      <div className="max-w-4xl mx-auto grid gap-4">
+        {filtered.map((college) => (
+          <div
+            key={college.id}
+            className="bg-white rounded-xl shadow p-5 border"
+          >
+            <h2 className="text-2xl font-semibold">{college.name}</h2>
 
-          <div className="bg-slate-800 rounded-xl p-6 shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">
-              🛠 Tech Stack
-            </h2>
+            <p className="text-gray-600">
+              📍 {college.location}
+            </p>
 
-            <ul className="space-y-2 text-gray-300">
-              <li>• Next.js 16</li>
-              <li>• TypeScript</li>
-              <li>• PostgreSQL</li>
-              <li>• Prisma ORM</li>
-              <li>• Tailwind CSS</li>
-              <li>• JWT Authentication</li>
-              <li>• Vercel Deployment</li>
-            </ul>
-          </div>
-        </div>
+            <p>💰 Fees: ₹{college.fees}</p>
 
-        <div className="mt-10 bg-slate-800 rounded-xl p-6 shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4">
-            📡 Available API Endpoints
-          </h2>
+            <p>⭐ Rating: {college.rating}</p>
 
-          <div className="space-y-3">
-            {endpoints.map((endpoint) => (
-              <div
-                key={endpoint.url}
-                className="flex flex-col md:flex-row md:items-center md:justify-between border border-slate-700 rounded-lg p-3"
+            <div className="mt-3 flex gap-3">
+              <a
+                href={`/api/colleges/${college.id}`}
+                target="_blank"
+                className="px-4 py-2 bg-blue-600 text-white rounded"
               >
-                <div>
-                  <p className="font-semibold">{endpoint.name}</p>
-                  <code className="text-green-400 text-sm">
-                    {endpoint.url}
-                  </code>
-                </div>
+                View API
+              </a>
 
-                <span className="mt-2 md:mt-0 bg-blue-600 px-3 py-1 rounded-full text-sm w-fit">
-                  {endpoint.method}
-                </span>
-              </div>
-            ))}
+              <a
+                href={`/api/colleges/compare?ids=${college.id},17`}
+                target="_blank"
+                className="px-4 py-2 bg-green-600 text-white rounded"
+              >
+                Compare
+              </a>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     </main>
   );

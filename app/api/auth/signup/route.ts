@@ -1,9 +1,7 @@
 import { NextResponse, NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import { prisma } from "@/lib/prisma" // Corrected: Reuses the safe global database instance pool
 import { handleError } from "@/lib/apiError"
-
-const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Name, email, and password are required" },
         { status: 400 }
-      );
+      )
     }
 
     // 2. Prevent profile duplication via unique email index matching
@@ -27,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "A user with this email already exists" },
         { status: 400 }
-      );
+      )
     }
 
     // 3. Transform plaintext string safely via salted crypt iterations

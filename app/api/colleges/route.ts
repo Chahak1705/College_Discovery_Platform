@@ -1,16 +1,14 @@
 import { NextResponse, NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/prisma" // Corrected: Linked to our shared database instance pool
 import { handleError } from "@/lib/apiError"
-
-const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-
     const search = searchParams.get("search")
     const state = searchParams.get("state")
     const maxFees = searchParams.get("maxFees")
+    
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "10")
     const skip = (page - 1) * limit
@@ -23,6 +21,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // Performance optimization: Promise.all runs queries in parallel concurrently
     const [colleges, total] = await Promise.all([
       prisma.college.findMany({
         where,

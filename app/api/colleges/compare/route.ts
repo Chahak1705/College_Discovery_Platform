@@ -1,8 +1,6 @@
 import { NextResponse, NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/prisma" // Corrected: Reuses our safe singleton pool
 import { handleError } from "@/lib/apiError"
-
-const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {

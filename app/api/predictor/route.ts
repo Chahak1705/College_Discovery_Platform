@@ -1,8 +1,6 @@
 import { NextResponse, NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/prisma" // Corrected: Linked to our shared connection instance pool
 import { handleError } from "@/lib/apiError"
-
-const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +26,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // UPDATED QUERY LOGIC:
+    // QUERY LOGIC:
     // In entrance exams, a lower numerical rank means a better score. 
     // You are eligible for any branch where your rank safely sits BELOW or EQUAL to the closing cutoff boundary.
     // Therefore, we look for records where the historical closingRank is Greater Than or Equal To (gte) your rank.
@@ -64,7 +62,7 @@ export async function GET(request: NextRequest) {
         college: c.college,
         openingRank: c.openingRank,
         closingRank: c.closingRank,
-        // UPDATED METRIC:
+        // METRIC:
         // A higher positive margin means the student cleared the cutoff more safely.
         safetyMargin: c.closingRank - rankNumber
       }))

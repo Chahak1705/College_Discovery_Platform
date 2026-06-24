@@ -1,9 +1,7 @@
 import { NextResponse, NextRequest } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/prisma" // Corrected: Linked to our shared database singleton
 import { getUserFromToken } from "@/lib/auth"
 import { handleError } from "@/lib/apiError"
-
-const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {

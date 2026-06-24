@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server"
 
 export function handleError(error: unknown) {
-  console.error("API Error:", error)
+  // 1. Log the full, raw error on the server side so YOU can see it in Vercel logs
+  console.error(" Internal API Error Logged:", error)
 
-  if (error instanceof Error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    )
-  }
-
+  // 2. Return a sanitized, completely safe message to the client/browser
   return NextResponse.json(
-    { error: "Something went wrong" },
+    { error: "Internal Server Error" },
     { status: 500 }
   )
 }
