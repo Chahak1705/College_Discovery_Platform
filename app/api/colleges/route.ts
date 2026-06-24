@@ -1,6 +1,8 @@
 import { NextResponse, NextRequest } from "next/server"
-import { prisma } from "@/lib/prisma" // Corrected: Linked to our shared database instance pool
+import { PrismaClient } from "@prisma/client" // 👈 DIRECT FROM PRISMA CLIENT
 import { handleError } from "@/lib/apiError"
+
+const prisma = new PrismaClient() // 👈 INSTANTIATE DIRECTLY FOR DEV/DEMO FAST PASS
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +23,6 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Performance optimization: Promise.all runs queries in parallel concurrently
     const [colleges, total] = await Promise.all([
       prisma.college.findMany({
         where,
