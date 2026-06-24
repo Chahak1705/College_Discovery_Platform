@@ -10,26 +10,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, email, password } = body
 
+    // 1. Enforce payload parameter inputs
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: "Name, email and password are required" },
+        { error: "Name, email, and password are required" },
         { status: 400 }
-      )
+      );
     }
 
+    // 2. Prevent profile duplication via unique email index matching
     const existingUser = await prisma.user.findUnique({
       where: { email }
     })
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User already exists with this email" },
+        { error: "A user with this email already exists" },
         { status: 400 }
-      )
+      );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // 3. Transform plaintext string safely via salted crypt iterations
+    const hashedPassword = await bcrypt.hash(password, 12)
 
+    // 4. Save record to Neon instance table mappings
     const user = await prisma.user.create({
       data: {
         name,
@@ -39,7 +43,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      message: "User created successfully",
+      message: "User registered successfully",
       user: {
         id: user.id,
         name: user.name,
