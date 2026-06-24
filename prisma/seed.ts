@@ -3,12 +3,14 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log("🧹 Clearing old seed data...")
-  // Delete child records first to satisfy foreign key rules
-  await prisma.cutoff.deleteMany({})
-  await prisma.college.deleteMany({})
+  console.log(" Clearing old seed data and resetting id counters...")
+  
+  // REFIX: Truncate tables and restart identity sequences completely back to 1
+  // CASCADE automatically handles the foreign key relationship cleanups for us safely!
+  await prisma.$executeRawUnsafe(`TRUNCATE TABLE "Cutoff" RESTART IDENTITY CASCADE;`)
+  await prisma.$executeRawUnsafe(`TRUNCATE TABLE "College" RESTART IDENTITY CASCADE;`)
 
-  console.log("🌱 Inserting fresh colleges...")
+  console.log(" Inserting fresh colleges...")
   await prisma.college.createMany({
     data: [
       { name: "IIT Delhi", location: "New Delhi", state: "Delhi", fees: 200000, rating: 4.8, description: "One of the top engineering colleges in India" },
@@ -20,7 +22,7 @@ async function main() {
     skipDuplicates: true
   })
 
-  console.log("📈 Inserting fresh cutoffs...")
+  console.log(" Inserting fresh cutoffs...")
   await prisma.cutoff.createMany({
     data: [
       { exam: "JEE", category: "General", openingRank: 1, closingRank: 100, collegeId: 1 },
@@ -35,7 +37,7 @@ async function main() {
     skipDuplicates: true
   })
 
-  console.log("Seeded successfully!")
+  console.log("Seeded successfully with clean IDs!")
 }
 
 main()
