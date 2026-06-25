@@ -41,20 +41,21 @@ interface CurrentUser {
 
 type CompareKey = 'location' | 'state' | 'fees' | 'rating'
 
-// ── Design tokens ──
+// ── Design tokens — navy/blue palette like the inspo ──
 const C = {
-  bg:        '#0a0a0a',
-  surface:   '#111111',
-  surfaceHi: '#1a1a1a',
-  border:    '#222222',
-  borderHi:  '#333333',
-  text:      '#e2e8f0',
-  textMuted: '#6b7280',
-  textDim:   '#374151',
-  accent:    '#ffffff',
-  accentDim: '#9ca3af',
-  danger:    '#f87171',
-  success:   '#4ade80',
+  bg:         '#070d1a',
+  surface:    '#0d1528',
+  surfaceHi:  '#121e36',
+  border:     '#1a2d4a',
+  borderHi:   '#2a4a72',
+  text:       '#e2e8f0',
+  textMuted:  '#64748b',
+  textDim:    '#1e2d44',
+  accent:     '#60a5fa',
+  accentDim:  '#93c5fd',
+  accentGlow: 'rgba(96,165,250,0.10)',
+  danger:     '#f87171',
+  success:    '#4ade80',
 }
 
 export default function Home() {
@@ -203,23 +204,31 @@ export default function Home() {
     { label: 'Rating', key: 'rating', format: (v) => `⭐ ${v}` },
   ]
 
-  // ─────────────────────────────────────────────
-  // NOT LOGGED IN → full-screen auth
-  // ─────────────────────────────────────────────
+  // ── NOT LOGGED IN → full-screen auth ──
   if (!currentUser) {
     return (
-      <div style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: 'system-ui, -apple-system, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{
+        minHeight: '100vh',
+        background: `radial-gradient(ellipse at 60% 0%, rgba(37,99,235,0.18) 0%, transparent 60%), ${C.bg}`,
+        color: C.text,
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+      }}>
         <div style={{ width: '100%', maxWidth: '360px' }}>
 
-          {/* Brand */}
           <div style={{ textAlign: 'center', marginBottom: '36px' }}>
             <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎓</div>
             <h1 style={{ margin: '0 0 6px', fontSize: '22px', fontWeight: 700, color: C.text, letterSpacing: '-0.02em' }}>College Discovery</h1>
             <p style={{ margin: 0, color: C.textMuted, fontSize: '13px' }}>Find your perfect college</p>
           </div>
 
-          {/* Card */}
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '28px' }}>
+          <div style={{
+            background: C.surface,
+            border: `1px solid ${C.border}`,
+            borderRadius: '20px',
+            padding: '28px',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(96,165,250,0.04)',
+          }}>
             <h2 style={{ margin: '0 0 20px', fontSize: '17px', fontWeight: 700, color: C.text }}>
               {authMode === 'login' ? 'Welcome back' : 'Create account'}
             </h2>
@@ -243,7 +252,12 @@ export default function Home() {
 
             <button
               onClick={authMode === 'login' ? handleLogin : handleSignup}
-              style={{ width: '100%', marginTop: '16px', padding: '13px', borderRadius: '12px', border: 'none', background: C.text, color: C.bg, fontWeight: 700, fontSize: '14px', cursor: 'pointer', letterSpacing: '0.01em' }}
+              style={{
+                width: '100%', marginTop: '16px', padding: '13px', borderRadius: '12px', border: 'none',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(37,99,235,0.4)',
+              }}
             >
               {authMode === 'login' ? 'Log In' : 'Create Account'}
             </button>
@@ -251,7 +265,7 @@ export default function Home() {
             <p style={{ textAlign: 'center', marginTop: '18px', marginBottom: 0, fontSize: '13px', color: C.textMuted }}>
               {authMode === 'login' ? "Don't have an account? " : 'Already have an account? '}
               <span onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError('') }}
-                style={{ color: C.text, cursor: 'pointer', fontWeight: 600 }}>
+                style={{ color: C.accent, cursor: 'pointer', fontWeight: 600 }}>
                 {authMode === 'login' ? 'Sign Up' : 'Log In'}
               </span>
             </p>
@@ -261,24 +275,33 @@ export default function Home() {
     )
   }
 
-  // ─────────────────────────────────────────────
-  // LOGGED IN → main app
-  // ─────────────────────────────────────────────
+  // ── LOGGED IN → main app ──
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: `radial-gradient(ellipse at 70% 0%, rgba(37,99,235,0.1) 0%, transparent 55%), ${C.bg}`,
+      color: C.text,
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+    }}>
 
       {/* Header */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: C.text }}>🎓 College Discovery</h1>
-        </div>
-        <div style={{ display: 'flex', gap: '4px', background: C.bg, padding: '3px', borderRadius: '10px', border: `1px solid ${C.border}` }}>
+      <div style={{
+        background: `${C.surface}e0`,
+        backdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${C.border}`,
+        padding: '14px 28px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}>
+        <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: C.text }}>🎓 College Discovery</h1>
+        <div style={{ display: 'flex', gap: '2px', background: C.bg, padding: '3px', borderRadius: '10px', border: `1px solid ${C.border}` }}>
           {(['list', 'compare', 'predictor', 'account'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{
               padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
               fontWeight: 600, fontSize: '13px',
               background: activeTab === tab ? C.surfaceHi : 'transparent',
-              color: activeTab === tab ? C.text : C.textMuted,
+              color: activeTab === tab ? C.accent : C.textMuted,
+              boxShadow: activeTab === tab ? `inset 0 0 0 1px ${C.border}` : 'none',
             }}>
               {tab === 'list' ? '🏫 Colleges' : tab === 'compare' ? '⚖️ Compare' : tab === 'predictor' ? '🎯 Predictor' : `👤 ${currentUser.name.split(' ')[0]}`}
             </button>
@@ -317,16 +340,16 @@ export default function Home() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
                   {colleges.map(college => (
                     <div key={college.id}
-                      style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '18px', transition: 'border-color 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor = C.borderHi}
-                      onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+                      style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '18px', transition: 'border-color 0.15s, box-shadow 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = C.borderHi; e.currentTarget.style.boxShadow = '0 4px 24px rgba(37,99,235,0.12)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.boxShadow = 'none' }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
                         <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: C.text, lineHeight: 1.3 }}>{college.name}</h3>
-                        <span style={{ background: C.surfaceHi, color: C.accentDim, padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>⭐ {college.rating}</span>
+                        <span style={{ background: C.accentGlow, color: C.accentDim, padding: '2px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', border: `1px solid ${C.border}` }}>⭐ {college.rating}</span>
                       </div>
                       <p style={{ margin: '0 0 4px', color: C.textMuted, fontSize: '13px' }}>📍 {college.location}, {college.state}</p>
-                      <p style={{ margin: '0 0 12px', color: C.accentDim, fontSize: '13px', fontWeight: 600 }}>₹{college.fees.toLocaleString()}/yr</p>
+                      <p style={{ margin: '0 0 12px', color: C.accent, fontSize: '13px', fontWeight: 600 }}>₹{college.fees.toLocaleString()}/yr</p>
                       <p style={{ margin: '0 0 16px', color: C.textMuted, fontSize: '12.5px', lineHeight: 1.55 }}>{college.description}</p>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button onClick={() => fetchCollegeDetail(college.id)}
@@ -338,7 +361,9 @@ export default function Home() {
                           💾
                         </button>
                         <button onClick={() => toggleCompare(college.id)}
-                          style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: compareIds.includes(college.id) ? C.text : C.surfaceHi, color: compareIds.includes(college.id) ? C.bg : C.textMuted }}>
+                          style={{ padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+                            background: compareIds.includes(college.id) ? C.accent : C.surfaceHi,
+                            color: compareIds.includes(college.id) ? '#fff' : C.textMuted }}>
                           {compareIds.includes(college.id) ? '✓' : '+'}
                         </button>
                       </div>
@@ -364,13 +389,13 @@ export default function Home() {
 
             {/* Detail Modal */}
             {selectedCollege && (
-              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '16px' }}
+              <div style={{ position: 'fixed', inset: 0, background: 'rgba(4,8,20,0.88)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '16px' }}
                 onClick={() => setSelectedCollege(null)}>
-                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '28px', maxWidth: '560px', width: '100%', maxHeight: '82vh', overflowY: 'auto' }}
+                <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '28px', maxWidth: '560px', width: '100%', maxHeight: '82vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}
                   onClick={e => e.stopPropagation()}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <h2 style={{ margin: 0, color: C.text, fontSize: '18px', fontWeight: 700 }}>{selectedCollege.name}</h2>
-                    <button onClick={() => setSelectedCollege(null)} style={{ background: C.surfaceHi, border: 'none', color: C.textMuted, cursor: 'pointer', width: '28px', height: '28px', borderRadius: '6px', fontSize: '14px' }}>✕</button>
+                    <button onClick={() => setSelectedCollege(null)} style={{ background: C.surfaceHi, border: `1px solid ${C.border}`, color: C.textMuted, cursor: 'pointer', width: '28px', height: '28px', borderRadius: '6px', fontSize: '14px' }}>✕</button>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '18px' }}>
                     {[
@@ -392,7 +417,7 @@ export default function Home() {
                       {selectedCollege.cutoffs.map((c: Cutoff) => (
                         <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 12px', background: C.bg, borderRadius: '7px', marginBottom: '5px', fontSize: '13px', border: `1px solid ${C.border}` }}>
                           <span style={{ color: C.textMuted }}>{c.exam} — {c.category}</span>
-                          <span style={{ color: C.text, fontWeight: 600 }}>{c.openingRank} – {c.closingRank}</span>
+                          <span style={{ color: C.accent, fontWeight: 600 }}>{c.openingRank} – {c.closingRank}</span>
                         </div>
                       ))}
                     </div>
@@ -408,7 +433,7 @@ export default function Home() {
           <div>
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
               <p style={{ margin: '0 0 10px', color: C.textMuted, fontSize: '13.5px' }}>Select 2–3 colleges from the Colleges tab, then compare here.</p>
-              <p style={{ margin: '0 0 14px', color: C.accentDim, fontSize: '13px' }}>Selected IDs: {compareIds.length > 0 ? compareIds.join(', ') : 'None'}</p>
+              <p style={{ margin: '0 0 14px', color: C.accent, fontSize: '13px' }}>Selected IDs: {compareIds.length > 0 ? compareIds.join(', ') : 'None'}</p>
               <button onClick={fetchCompare} style={btn({ padding: '10px 24px' })}>Compare Now</button>
             </div>
             {compareData.length > 0 ? (
@@ -418,7 +443,7 @@ export default function Home() {
                     <tr>
                       <th style={{ padding: '13px', textAlign: 'left', color: C.textMuted, fontSize: '12px', borderBottom: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Feature</th>
                       {compareData.map(c => (
-                        <th key={c.id} style={{ padding: '13px', textAlign: 'left', color: C.text, fontSize: '13px', borderBottom: `1px solid ${C.border}`, fontWeight: 700 }}>{c.name}</th>
+                        <th key={c.id} style={{ padding: '13px', textAlign: 'left', color: C.accent, fontSize: '13px', borderBottom: `1px solid ${C.border}`, fontWeight: 700 }}>{c.name}</th>
                       ))}
                     </tr>
                   </thead>
@@ -474,7 +499,7 @@ export default function Home() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <p style={{ margin: '0 0 2px', fontSize: '10px', color: C.textMuted, textTransform: 'uppercase' }}>Cutoff Range</p>
-                        <p style={{ margin: 0, color: C.text, fontWeight: 700, fontSize: '13px' }}>{r.openingRank} – {r.closingRank}</p>
+                        <p style={{ margin: 0, color: C.accent, fontWeight: 700, fontSize: '13px' }}>{r.openingRank} – {r.closingRank}</p>
                       </div>
                     </div>
                   ))}
@@ -493,7 +518,14 @@ export default function Home() {
           <div>
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: C.surfaceHi, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 700, color: C.text }}>
+                <div style={{
+                  width: '44px', height: '44px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
+                  border: `1px solid ${C.borderHi}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '18px', fontWeight: 700, color: '#fff',
+                  boxShadow: '0 4px 12px rgba(37,99,235,0.3)',
+                }}>
                   {currentUser.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -535,7 +567,7 @@ export default function Home() {
 function authInput(extra: React.CSSProperties): React.CSSProperties {
   return {
     width: '100%', padding: '12px 14px', borderRadius: '10px',
-    border: '1px solid #222222', background: '#0a0a0a',
+    border: '1px solid #1a2d4a', background: '#070d1a',
     color: '#e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box',
     ...extra,
   }
@@ -544,7 +576,7 @@ function authInput(extra: React.CSSProperties): React.CSSProperties {
 function iStyle(extra: React.CSSProperties): React.CSSProperties {
   return {
     padding: '10px 13px', borderRadius: '8px',
-    border: '1px solid #222222', background: '#0a0a0a',
+    border: '1px solid #1a2d4a', background: '#070d1a',
     color: '#e2e8f0', fontSize: '14px', outline: 'none',
     ...extra,
   }
@@ -553,8 +585,10 @@ function iStyle(extra: React.CSSProperties): React.CSSProperties {
 function btn(extra: React.CSSProperties): React.CSSProperties {
   return {
     borderRadius: '8px', border: 'none',
-    background: '#e2e8f0', color: '#0a0a0a',
+    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+    color: '#fff',
     fontWeight: 700, cursor: 'pointer', fontSize: '13px',
+    boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
     ...extra,
   }
 }
