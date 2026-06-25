@@ -195,6 +195,101 @@ export default function Home() {
     { label: 'Rating', key: 'rating', format: (v: number) => `⭐ ${v}` },
   ]
 
+  // ── Not logged in → full screen login/signup ──
+  if (!currentUser) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #0a0f1e 0%, #0c1322 100%)',
+        color: '#e2e8f0',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+      }}>
+        <div style={{ width: '100%', maxWidth: '380px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <h1 style={{ margin: '0 0 6px', fontSize: '28px', fontWeight: 800, color: '#60a5fa', letterSpacing: '-0.02em' }}>College Discovery</h1>
+            <p style={{ margin: 0, color: '#475569', fontSize: '14px' }}>Find, compare, and predict your perfect college</p>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600, marginBottom: '12px' }}>
+            {authMode === 'login' ? 'welcome back' : 'get started'}
+          </p>
+
+          <div style={{
+            background: 'rgba(13, 21, 40, 0.75)',
+            border: '1px solid rgba(96, 165, 250, 0.15)',
+            borderRadius: '28px',
+            padding: '36px 32px 28px',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+              <div style={{
+                width: '64px', height: '64px', borderRadius: '50%',
+                background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '26px', border: '2px solid rgba(96,165,250,0.2)',
+                boxShadow: '0 8px 24px rgba(37,99,235,0.25)',
+              }}>🎓</div>
+            </div>
+
+            <h2 style={{ margin: '0 0 6px', textAlign: 'center', fontSize: '22px', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.02em' }}>
+              {authMode === 'login' ? 'Log In' : 'Create Account'}
+            </h2>
+            <p style={{ textAlign: 'center', color: '#475569', fontSize: '13px', marginBottom: '28px' }}>
+              {authMode === 'login' ? 'Save and track your dream colleges' : 'Join thousands of students'}
+            </p>
+
+            {authMode === 'signup' && (
+              <input placeholder="Full Name" value={authName} onChange={e => setAuthName(e.target.value)}
+                style={glassInputStyle({ marginBottom: '10px' })} />
+            )}
+            <input placeholder="Email" value={authEmail} onChange={e => setAuthEmail(e.target.value)}
+              style={glassInputStyle({ marginBottom: '10px' })} />
+            <input placeholder="Password" type="password" value={authPassword}
+              onChange={e => setAuthPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (authMode === 'login' ? handleLogin() : handleSignup())}
+              style={glassInputStyle({ marginBottom: '6px' })} />
+
+            {authError && (
+              <p style={{ color: authError.includes('created') ? '#4ade80' : '#f87171', fontSize: '12.5px', textAlign: 'center', margin: '10px 0' }}>
+                {authError}
+              </p>
+            )}
+
+            <div style={{ marginTop: '18px' }}>
+              <button
+                onClick={authMode === 'login' ? handleLogin : handleSignup}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: '14px', border: 'none',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer',
+                  boxShadow: '0 4px 16px rgba(37,99,235,0.4)',
+                }}
+              >
+                {authMode === 'login' ? 'Log In' : 'Create Account'}
+              </button>
+            </div>
+
+            <p style={{ textAlign: 'center', marginTop: '20px', marginBottom: 0, fontSize: '13px', color: '#475569' }}>
+              {authMode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              <span
+                onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError('') }}
+                style={{ color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
+              >
+                {authMode === 'login' ? 'Sign Up' : 'Log In'}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Logged in → show main app ──
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #0a0f1e 0%, #0c1322 100%)', color: '#e2e8f0', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
@@ -214,7 +309,7 @@ export default function Home() {
         backdropFilter: 'blur(8px)',
       }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: '#60a5fa', letterSpacing: '-0.02em' }}>🎓 College Discovery</h1>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: '#60a5fa', letterSpacing: '-0.02em' }}> College Discovery</h1>
           <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#64748b' }}>Find, compare, and predict your perfect college</p>
         </div>
         <div style={{ display: 'flex', gap: '6px', background: '#0a0f1e', padding: '4px', borderRadius: '12px', border: '1px solid #1e3a5f' }}>
