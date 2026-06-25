@@ -7,8 +7,6 @@ CREATE TABLE "College" (
     "fees" INTEGER NOT NULL,
     "rating" DOUBLE PRECISION NOT NULL,
     "description" TEXT,
-    "imageUrl" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "College_pkey" PRIMARY KEY ("id")
 );
@@ -42,7 +40,6 @@ CREATE TABLE "Review" (
     "id" SERIAL NOT NULL,
     "rating" DOUBLE PRECISION NOT NULL,
     "comment" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "collegeId" INTEGER NOT NULL,
     "userId" INTEGER NOT NULL,
 
@@ -67,7 +64,6 @@ CREATE TABLE "User" (
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );

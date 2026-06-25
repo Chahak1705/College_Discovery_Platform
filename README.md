@@ -36,5 +36,5 @@ https://college-discovery-sooty.vercel.app
 - Pagination
 - JWT Authentication
 - College comparison
-- Rank-based predictor
+- Rank based predictor
 - Proper error handling
