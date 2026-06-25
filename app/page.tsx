@@ -293,7 +293,7 @@ export default function Home() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px',
         position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: C.text }}>Welcome to College Discovery Portal</h1>
+        <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: C.text }}> College Discovery Portal</h1>
         <div style={{ display: 'flex', gap: '2px', background: C.bg, padding: '3px', borderRadius: '10px', border: `1px solid ${C.border}` }}>
           {(['list', 'compare', 'predictor', 'account'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{
