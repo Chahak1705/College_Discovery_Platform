@@ -2,8 +2,6 @@ import { NextResponse, NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma" // 👈 DIRECT FROM PRISMA CLIENT
 import { handleError } from "@/lib/apiError"
 
- // 👈 INSTANTIATE DIRECTLY FOR DEV/DEMO FAST PASS
-
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
