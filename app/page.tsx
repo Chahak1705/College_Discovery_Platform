@@ -59,7 +59,6 @@ export default function Home() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Auth state
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [authName, setAuthName] = useState('')
   const [authEmail, setAuthEmail] = useState('')
@@ -107,7 +106,6 @@ export default function Home() {
     setPredictorResults(data.data || [])
   }
 
-  // Auth functions
   const handleSignup = async () => {
     setAuthError('')
     const res = await fetch(`${API}/api/auth/signup`, {
@@ -130,9 +128,11 @@ export default function Home() {
     })
     const data = await res.json()
     if (!res.ok) return setAuthError(data.error || 'Login failed')
+    const user = data.user || { id: data.id, name: data.name || data.email, email: data.email }
     setToken(data.token)
-    setCurrentUser(data.user)
+    setCurrentUser(user)
     localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(user))
     setAuthEmail('')
     setAuthPassword('')
   }
@@ -142,6 +142,7 @@ export default function Home() {
     setCurrentUser(null)
     setSavedColleges([])
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
   }
 
   const fetchSavedColleges = useCallback(async () => {
@@ -166,10 +167,11 @@ export default function Home() {
     if (res.ok) fetchSavedColleges()
   }
 
-  // Restore token from localStorage on first load
   useEffect(() => {
     const saved = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
     if (saved) setToken(saved)
+    if (savedUser) { try { setCurrentUser(JSON.parse(savedUser)) } catch {} }
   }, [])
 
   useEffect(() => {
@@ -195,6 +197,7 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #0a0f1e 0%, #0c1322 100%)', color: '#e2e8f0', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+
       {/* Header */}
       <div style={{
         background: 'linear-gradient(135deg, #0d1528 0%, #0f1c38 100%)',
@@ -232,7 +235,7 @@ export default function Home() {
                 boxShadow: activeTab === tab ? '0 2px 8px rgba(37,99,235,0.4)' : 'none',
               }}
             >
-              {tab === 'list' ? '🏫 Colleges' : tab === 'compare' ? '⚖️ Compare' : tab === 'predictor' ? '🎯 Predictor' : '👤 Account'}
+              {tab === 'list' ? '🏫 Colleges' : tab === 'compare' ? '⚖️ Compare' : tab === 'predictor' ? '🎯 Predictor' : currentUser ? `👤 ${currentUser.name.split(' ')[0]}` : '👤 Account'}
             </button>
           ))}
         </div>
@@ -243,7 +246,6 @@ export default function Home() {
         {/* COLLEGES LIST TAB */}
         {activeTab === 'list' && (
           <div>
-            {/* Filters */}
             <div style={{
               display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap',
               background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '14px', padding: '16px',
@@ -357,11 +359,7 @@ export default function Home() {
                     >
                       ← Prev
                     </button>
-
-                    <span style={{ color: '#94a3b8', fontSize: '13px', padding: '0 8px' }}>
-                      Page {page} of {totalPages}
-                    </span>
-
+                    <span style={{ color: '#94a3b8', fontSize: '13px', padding: '0 8px' }}>Page {page} of {totalPages}</span>
                     <button
                       onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
@@ -432,11 +430,8 @@ export default function Home() {
               <p style={{ margin: '0 0 18px', color: '#60a5fa', fontSize: '13px', fontWeight: 600 }}>
                 Selected: {compareIds.length > 0 ? compareIds.join(', ') : 'None'}
               </p>
-              <button onClick={fetchCompare} style={primaryBtnStyle({ padding: '11px 28px' })}>
-                Compare Now
-              </button>
+              <button onClick={fetchCompare} style={primaryBtnStyle({ padding: '11px 28px' })}>Compare Now</button>
             </div>
-
             {compareData.length > 0 ? (
               <div style={{ overflowX: 'auto', background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '14px', padding: '8px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -479,29 +474,15 @@ export default function Home() {
               <p style={{ margin: '0 0 20px', color: '#64748b', fontSize: '13px' }}>Enter your exam rank to see colleges you're eligible for.</p>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <select value={predictorExam} onChange={e => setPredictorExam(e.target.value)} style={inputStyle({})}>
-                  <option>JEE</option>
-                  <option>NEET</option>
-                  <option>CAT</option>
+                  <option>JEE</option><option>NEET</option><option>CAT</option>
                 </select>
-                <input
-                  placeholder="Your Rank"
-                  value={predictorRank}
-                  onChange={e => setPredictorRank(e.target.value)}
-                  type="number"
-                  style={inputStyle({ width: '150px' })}
-                />
+                <input placeholder="Your Rank" value={predictorRank} onChange={e => setPredictorRank(e.target.value)} type="number" style={inputStyle({ width: '150px' })} />
                 <select value={predictorCategory} onChange={e => setPredictorCategory(e.target.value)} style={inputStyle({})}>
-                  <option>General</option>
-                  <option>OBC</option>
-                  <option>SC</option>
-                  <option>ST</option>
+                  <option>General</option><option>OBC</option><option>SC</option><option>ST</option>
                 </select>
-                <button onClick={fetchPredictor} style={primaryBtnStyle({ padding: '11px 28px' })}>
-                  Predict
-                </button>
+                <button onClick={fetchPredictor} style={primaryBtnStyle({ padding: '11px 28px' })}>Predict</button>
               </div>
             </div>
-
             {predictorResults.length > 0 ? (
               <div>
                 <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '13px', fontWeight: 500 }}>
@@ -535,20 +516,54 @@ export default function Home() {
         {activeTab === 'account' && (
           <div>
             {currentUser ? (
+              /* ── Logged-in dashboard ── */
               <div>
-                <div style={{ background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '14px', padding: '22px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                  <div>
-                    <h2 style={{ margin: '0 0 4px', color: '#60a5fa', fontSize: '18px' }}>👋 {currentUser.name}</h2>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>{currentUser.email}</p>
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(13,21,40,0.9) 100%)',
+                  border: '1px solid rgba(96,165,250,0.2)',
+                  borderRadius: '20px',
+                  padding: '28px',
+                  marginBottom: '28px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  backdropFilter: 'blur(12px)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{
+                      width: '52px', height: '52px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '20px', fontWeight: 800, color: '#fff',
+                      boxShadow: '0 4px 16px rgba(37,99,235,0.4)',
+                    }}>
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 style={{ margin: '0 0 3px', color: '#f1f5f9', fontSize: '18px', fontWeight: 800 }}>
+                        {currentUser.name}
+                      </h2>
+                      <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>{currentUser.email}</p>
+                    </div>
                   </div>
-                  <button onClick={handleLogout} style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid #1e3a5f', background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                  <button
+                    onClick={handleLogout}
+                    style={{ padding: '9px 20px', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#f87171', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                  >
                     Log out
                   </button>
                 </div>
 
-                <h3 style={{ color: '#e2e8f0', fontSize: '15px', marginBottom: '12px' }}>Saved Colleges ({savedColleges.length})</h3>
+                <h3 style={{ color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', fontWeight: 700 }}>
+                  Saved Colleges — {savedColleges.length}
+                </h3>
                 {savedColleges.length === 0 ? (
-                  <p style={{ color: '#475569', fontSize: '14px' }}>No saved colleges yet. Go to the Colleges tab and save some!</p>
+                  <div style={{ textAlign: 'center', padding: '60px', color: '#475569' }}>
+                    <div style={{ fontSize: '36px', marginBottom: '10px' }}>🔖</div>
+                    <p style={{ margin: 0, fontSize: '14px' }}>No saved colleges yet. Hit 💾 Save on any college!</p>
+                  </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
                     {savedColleges.map(c => (
@@ -561,31 +576,138 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              <div style={{ maxWidth: '380px', margin: '40px auto', background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '16px', padding: '28px' }}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-                  <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', background: authMode === 'login' ? '#2563eb' : '#1e293b', color: authMode === 'login' ? '#fff' : '#94a3b8' }}>
-                    Log In
-                  </button>
-                  <button onClick={() => setAuthMode('signup')} style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', background: authMode === 'signup' ? '#2563eb' : '#1e293b', color: authMode === 'signup' ? '#fff' : '#94a3b8' }}>
-                    Sign Up
-                  </button>
+              /* ── Auth card — glassmorphism style ── */
+              <div style={{
+                minHeight: '70vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <div style={{ width: '100%', maxWidth: '380px' }}>
+
+                  {/* Top label */}
+                  <p style={{
+                    textAlign: 'center',
+                    fontSize: '11px',
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    fontWeight: 600,
+                    marginBottom: '12px',
+                  }}>
+                    {authMode === 'login' ? 'welcome back' : 'get started'}
+                  </p>
+
+                  {/* Glass card */}
+                  <div style={{
+                    background: 'rgba(13, 21, 40, 0.75)',
+                    border: '1px solid rgba(96, 165, 250, 0.15)',
+                    borderRadius: '28px',
+                    padding: '36px 32px 28px',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 24px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+                  }}>
+                    {/* Avatar circle at top */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                      <div style={{
+                        width: '64px', height: '64px', borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '26px',
+                        border: '2px solid rgba(96,165,250,0.2)',
+                        boxShadow: '0 8px 24px rgba(37,99,235,0.25)',
+                      }}>
+                        🎓
+                      </div>
+                    </div>
+
+                    <h2 style={{
+                      margin: '0 0 6px',
+                      textAlign: 'center',
+                      fontSize: '22px',
+                      fontWeight: 800,
+                      color: '#f1f5f9',
+                      letterSpacing: '-0.02em',
+                    }}>
+                      {authMode === 'login' ? 'Log In' : 'Create Account'}
+                    </h2>
+                    <p style={{ textAlign: 'center', color: '#475569', fontSize: '13px', marginBottom: '28px' }}>
+                      {authMode === 'login' ? 'Save and track your dream colleges' : 'Join thousands of students'}
+                    </p>
+
+                    {/* Fields */}
+                    {authMode === 'signup' && (
+                      <input
+                        placeholder="Full Name"
+                        value={authName}
+                        onChange={e => setAuthName(e.target.value)}
+                        style={glassInputStyle({ marginBottom: '10px' })}
+                      />
+                    )}
+                    <input
+                      placeholder="Email"
+                      value={authEmail}
+                      onChange={e => setAuthEmail(e.target.value)}
+                      style={glassInputStyle({ marginBottom: '10px' })}
+                    />
+                    <input
+                      placeholder="Password"
+                      type="password"
+                      value={authPassword}
+                      onChange={e => setAuthPassword(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && (authMode === 'login' ? handleLogin() : handleSignup())}
+                      style={glassInputStyle({ marginBottom: '6px' })}
+                    />
+
+                    {authError && (
+                      <p style={{
+                        color: authError.includes('created') ? '#4ade80' : '#f87171',
+                        fontSize: '12.5px',
+                        textAlign: 'center',
+                        margin: '10px 0',
+                      }}>
+                        {authError}
+                      </p>
+                    )}
+
+                    <div style={{ marginTop: '18px' }}>
+                      <button
+                        onClick={authMode === 'login' ? handleLogin : handleSignup}
+                        style={{
+                          width: '100%',
+                          padding: '14px',
+                          borderRadius: '14px',
+                          border: 'none',
+                          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: '15px',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 16px rgba(37,99,235,0.4)',
+                          letterSpacing: '0.01em',
+                        }}
+                      >
+                        {authMode === 'login' ? 'Log In' : 'Create Account'}
+                      </button>
+                    </div>
+
+                    {/* Switch link */}
+                    <p style={{ textAlign: 'center', marginTop: '20px', marginBottom: 0, fontSize: '13px', color: '#475569' }}>
+                      {authMode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                      <span
+                        onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError('') }}
+                        style={{ color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        {authMode === 'login' ? 'Sign Up' : 'Log In'}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-
-                {authMode === 'signup' && (
-                  <input placeholder="Name" value={authName} onChange={e => setAuthName(e.target.value)} style={inputStyle({ width: '100%', marginBottom: '10px', boxSizing: 'border-box' })} />
-                )}
-                <input placeholder="Email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={inputStyle({ width: '100%', marginBottom: '10px', boxSizing: 'border-box' })} />
-                <input placeholder="Password" type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} style={inputStyle({ width: '100%', marginBottom: '14px', boxSizing: 'border-box' })} />
-
-                {authError && <p style={{ color: authError.includes('created') ? '#4ade80' : '#f87171', fontSize: '13px', marginBottom: '12px' }}>{authError}</p>}
-
-                <button onClick={authMode === 'login' ? handleLogin : handleSignup} style={primaryBtnStyle({ width: '100%', padding: '11px' })}>
-                  {authMode === 'login' ? 'Log In' : 'Create Account'}
-                </button>
               </div>
             )}
           </div>
         )}
+
       </div>
     </div>
   )
@@ -600,6 +722,21 @@ function inputStyle(extra: React.CSSProperties): React.CSSProperties {
     color: '#e2e8f0',
     fontSize: '14px',
     outline: 'none',
+    ...extra,
+  }
+}
+
+function glassInputStyle(extra: React.CSSProperties): React.CSSProperties {
+  return {
+    width: '100%',
+    padding: '13px 16px',
+    borderRadius: '12px',
+    border: '1px solid rgba(96,165,250,0.15)',
+    background: 'rgba(10,15,30,0.6)',
+    color: '#e2e8f0',
+    fontSize: '14px',
+    outline: 'none',
+    boxSizing: 'border-box',
     ...extra,
   }
 }
