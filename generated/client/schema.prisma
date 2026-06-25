@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model College {
+  id          Int      @id @default(autoincrement())
+  name        String
+  location    String
+  state       String
+  fees        Int
+  rating      Float
+  description String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  courses    Course[]
+  placements Placement[]
+  reviews    Review[]
+  cutoffs    Cutoff[]
+  savedBy    SavedCollege[]
+}
+
+model Course {
+  id        Int     @id @default(autoincrement())
+  name      String
+  duration  String
+  seats     Int
+  fees      Int
+  collegeId Int
+  college   College @relation(fields: [collegeId], references: [id])
+}
+
+model Placement {
+  id             Int     @id @default(autoincrement())
+  year           Int
+  avgPackage     Int
+  highestPackage Int
+  placementRate  Float
+  collegeId      Int
+  college        College @relation(fields: [collegeId], references: [id])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Float
+  comment   String
+  createdAt DateTime @default(now())
+  collegeId Int
+  college   College  @relation(fields: [collegeId], references: [id])
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Cutoff {
+  id          Int     @id @default(autoincrement())
+  exam        String
+  category    String
+  openingRank Int
+  closingRank Int
+  collegeId   Int
+  college     College @relation(fields: [collegeId], references: [id])
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  password         String
+  isAdmin          Boolean   @default(false)
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+
+  reviews       Review[]
+  savedColleges SavedCollege[]
+}
+
+model SavedCollege {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  collegeId Int
+  user      User    @relation(fields: [userId], references: [id])
+  college   College @relation(fields: [collegeId], references: [id])
+
+  @@unique([userId, collegeId])
+}

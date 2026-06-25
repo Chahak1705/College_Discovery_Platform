@@ -33,6 +33,12 @@ interface PredictorResult {
   closingRank: number
 }
 
+interface CurrentUser {
+  id: number
+  name: string
+  email: string
+}
+
 type CompareKey = 'location' | 'state' | 'fees' | 'rating'
 
 export default function Home() {
@@ -48,8 +54,20 @@ export default function Home() {
   const [predictorRank, setPredictorRank] = useState('')
   const [predictorCategory, setPredictorCategory] = useState('General')
   const [predictorResults, setPredictorResults] = useState<PredictorResult[]>([])
-  const [activeTab, setActiveTab] = useState<'list' | 'compare' | 'predictor'>('list')
+  const [activeTab, setActiveTab] = useState<'list' | 'compare' | 'predictor' | 'account'>('list')
   const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
+  // Auth state
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
+  const [authName, setAuthName] = useState('')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [token, setToken] = useState<string | null>(null)
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [authError, setAuthError] = useState('')
+  const [savedColleges, setSavedColleges] = useState<College[]>([])
 
   const API = 'https://college-discovery-sooty.vercel.app'
 
@@ -59,12 +77,15 @@ export default function Home() {
     if (search) params.append('search', search)
     if (state) params.append('state', state)
     if (maxFees) params.append('maxFees', maxFees)
+    params.append('page', String(page))
+    params.append('limit', '10')
     const res = await fetch(`${API}/api/colleges?${params}`)
     const data = await res.json()
     setColleges(data.data || [])
     setTotal(data.total || 0)
+    setTotalPages(data.totalPages || 1)
     setLoading(false)
-  }, [search, state, maxFees])
+  }, [search, state, maxFees, page])
 
   const fetchCollegeDetail = async (id: number) => {
     const res = await fetch(`${API}/api/colleges/${id}`)
@@ -85,6 +106,75 @@ export default function Home() {
     const data = await res.json()
     setPredictorResults(data.data || [])
   }
+
+  // Auth functions
+  const handleSignup = async () => {
+    setAuthError('')
+    const res = await fetch(`${API}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: authName, email: authEmail, password: authPassword })
+    })
+    const data = await res.json()
+    if (!res.ok) return setAuthError(data.error || 'Signup failed')
+    setAuthMode('login')
+    setAuthError('Account created! Please log in.')
+  }
+
+  const handleLogin = async () => {
+    setAuthError('')
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: authEmail, password: authPassword })
+    })
+    const data = await res.json()
+    if (!res.ok) return setAuthError(data.error || 'Login failed')
+    setToken(data.token)
+    setCurrentUser(data.user)
+    localStorage.setItem('token', data.token)
+    setAuthEmail('')
+    setAuthPassword('')
+  }
+
+  const handleLogout = () => {
+    setToken(null)
+    setCurrentUser(null)
+    setSavedColleges([])
+    localStorage.removeItem('token')
+  }
+
+  const fetchSavedColleges = useCallback(async () => {
+    if (!token) return
+    const res = await fetch(`${API}/api/user/saved`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    setSavedColleges(data.data || [])
+  }, [token])
+
+  const saveCollege = async (collegeId: number) => {
+    if (!token) {
+      setActiveTab('account')
+      return alert('Please log in to save colleges')
+    }
+    const res = await fetch(`${API}/api/colleges/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ collegeId })
+    })
+    if (res.ok) fetchSavedColleges()
+  }
+
+  // Restore token from localStorage on first load
+  useEffect(() => {
+    const saved = localStorage.getItem('token')
+    if (saved) setToken(saved)
+  }, [])
+
+  useEffect(() => {
+    if (token) fetchSavedColleges()
+  }, [token, fetchSavedColleges])
 
   useEffect(() => {
     fetchColleges()
@@ -125,7 +215,7 @@ export default function Home() {
           <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#64748b' }}>Find, compare, and predict your perfect college</p>
         </div>
         <div style={{ display: 'flex', gap: '6px', background: '#0a0f1e', padding: '4px', borderRadius: '12px', border: '1px solid #1e3a5f' }}>
-          {(['list', 'compare', 'predictor'] as const).map(tab => (
+          {(['list', 'compare', 'predictor', 'account'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -142,7 +232,7 @@ export default function Home() {
                 boxShadow: activeTab === tab ? '0 2px 8px rgba(37,99,235,0.4)' : 'none',
               }}
             >
-              {tab === 'list' ? '🏫 Colleges' : tab === 'compare' ? '⚖️ Compare' : '🎯 Predictor'}
+              {tab === 'list' ? '🏫 Colleges' : tab === 'compare' ? '⚖️ Compare' : tab === 'predictor' ? '🎯 Predictor' : '👤 Account'}
             </button>
           ))}
         </div>
@@ -162,24 +252,24 @@ export default function Home() {
                 placeholder="🔍 Search colleges..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && fetchColleges()}
+                onKeyDown={e => e.key === 'Enter' && setPage(1)}
                 style={inputStyle({ flex: 1, minWidth: '220px' })}
               />
               <input
                 placeholder="State (e.g. Delhi)"
                 value={state}
                 onChange={e => setState(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && fetchColleges()}
+                onKeyDown={e => e.key === 'Enter' && setPage(1)}
                 style={inputStyle({ width: '170px' })}
               />
               <input
                 placeholder="Max Fees (₹)"
                 value={maxFees}
                 onChange={e => setMaxFees(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && fetchColleges()}
+                onKeyDown={e => e.key === 'Enter' && setPage(1)}
                 style={inputStyle({ width: '140px' })}
               />
-              <button onClick={fetchColleges} style={primaryBtnStyle({ padding: '11px 26px' })}>
+              <button onClick={() => setPage(1)} style={primaryBtnStyle({ padding: '11px 26px' })}>
                 Search
               </button>
             </div>
@@ -196,55 +286,97 @@ export default function Home() {
                 <p style={{ margin: 0, fontSize: '14px' }}>No colleges match your filters.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '18px' }}>
-                {colleges.map(college => (
-                  <div
-                    key={college.id}
-                    style={{
-                      background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '14px', padding: '20px',
-                      transition: 'transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = '#2563eb'
-                      e.currentTarget.style.transform = 'translateY(-2px)'
-                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(37,99,235,0.15)'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = '#1e3a5f'
-                      e.currentTarget.style.transform = 'translateY(0)'
-                      e.currentTarget.style.boxShadow = 'none'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '8px' }}>
-                      <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>{college.name}</h3>
-                      <span style={{ background: '#1e3a5f', color: '#60a5fa', padding: '3px 9px', borderRadius: '7px', fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                        ⭐ {college.rating}
-                      </span>
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '18px' }}>
+                  {colleges.map(college => (
+                    <div
+                      key={college.id}
+                      style={{
+                        background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '14px', padding: '20px',
+                        transition: 'transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = '#2563eb'
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(37,99,235,0.15)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = '#1e3a5f'
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '8px' }}>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>{college.name}</h3>
+                        <span style={{ background: '#1e3a5f', color: '#60a5fa', padding: '3px 9px', borderRadius: '7px', fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                          ⭐ {college.rating}
+                        </span>
+                      </div>
+                      <p style={{ margin: '0 0 6px', color: '#94a3b8', fontSize: '13px' }}>📍 {college.location}, {college.state}</p>
+                      <p style={{ margin: '0 0 14px', color: '#60a5fa', fontSize: '13px', fontWeight: 700 }}>💰 ₹{college.fees.toLocaleString()}/yr</p>
+                      <p style={{ margin: '0 0 18px', color: '#64748b', fontSize: '12.5px', lineHeight: '1.55' }}>{college.description}</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => fetchCollegeDetail(college.id)}
+                          style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '1px solid #2563eb', background: 'transparent', color: '#60a5fa', cursor: 'pointer', fontSize: '12.5px', fontWeight: 600 }}
+                        >
+                          View Details
+                        </button>
+                        <button
+                          onClick={() => saveCollege(college.id)}
+                          style={{ padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12.5px', fontWeight: 700, background: '#1e293b', color: '#94a3b8' }}
+                        >
+                          💾 Save
+                        </button>
+                        <button
+                          onClick={() => toggleCompare(college.id)}
+                          style={{
+                            padding: '9px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12.5px', fontWeight: 700,
+                            background: compareIds.includes(college.id) ? '#2563eb' : '#1e293b',
+                            color: compareIds.includes(college.id) ? '#fff' : '#94a3b8',
+                          }}
+                        >
+                          {compareIds.includes(college.id) ? '✓ Added' : '+ Compare'}
+                        </button>
+                      </div>
                     </div>
-                    <p style={{ margin: '0 0 6px', color: '#94a3b8', fontSize: '13px' }}>📍 {college.location}, {college.state}</p>
-                    <p style={{ margin: '0 0 14px', color: '#60a5fa', fontSize: '13px', fontWeight: 700 }}>💰 ₹{college.fees.toLocaleString()}/yr</p>
-                    <p style={{ margin: '0 0 18px', color: '#64748b', fontSize: '12.5px', lineHeight: '1.55' }}>{college.description}</p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button
-                        onClick={() => fetchCollegeDetail(college.id)}
-                        style={{ flex: 1, padding: '9px', borderRadius: '8px', border: '1px solid #2563eb', background: 'transparent', color: '#60a5fa', cursor: 'pointer', fontSize: '12.5px', fontWeight: 600 }}
-                      >
-                        View Details
-                      </button>
-                      <button
-                        onClick={() => toggleCompare(college.id)}
-                        style={{
-                          padding: '9px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '12.5px', fontWeight: 700,
-                          background: compareIds.includes(college.id) ? '#2563eb' : '#1e293b',
-                          color: compareIds.includes(college.id) ? '#fff' : '#94a3b8',
-                        }}
-                      >
-                        {compareIds.includes(college.id) ? '✓ Added' : '+ Compare'}
-                      </button>
-                    </div>
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '28px' }}>
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      style={{
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid #1e3a5f',
+                        background: page === 1 ? '#0a0f1e' : '#1e293b',
+                        color: page === 1 ? '#475569' : '#e2e8f0',
+                        cursor: page === 1 ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 600,
+                      }}
+                    >
+                      ← Prev
+                    </button>
+
+                    <span style={{ color: '#94a3b8', fontSize: '13px', padding: '0 8px' }}>
+                      Page {page} of {totalPages}
+                    </span>
+
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      style={{
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid #1e3a5f',
+                        background: page === totalPages ? '#0a0f1e' : '#1e293b',
+                        color: page === totalPages ? '#475569' : '#e2e8f0',
+                        cursor: page === totalPages ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 600,
+                      }}
+                    >
+                      Next →
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
 
             {/* College Detail Modal */}
@@ -396,6 +528,62 @@ export default function Home() {
                 <p style={{ margin: 0, fontSize: '14px' }}>No colleges found for this rank. Try a different rank or category.</p>
               </div>
             ) : null}
+          </div>
+        )}
+
+        {/* ACCOUNT TAB */}
+        {activeTab === 'account' && (
+          <div>
+            {currentUser ? (
+              <div>
+                <div style={{ background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '14px', padding: '22px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <h2 style={{ margin: '0 0 4px', color: '#60a5fa', fontSize: '18px' }}>👋 {currentUser.name}</h2>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>{currentUser.email}</p>
+                  </div>
+                  <button onClick={handleLogout} style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid #1e3a5f', background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                    Log out
+                  </button>
+                </div>
+
+                <h3 style={{ color: '#e2e8f0', fontSize: '15px', marginBottom: '12px' }}>Saved Colleges ({savedColleges.length})</h3>
+                {savedColleges.length === 0 ? (
+                  <p style={{ color: '#475569', fontSize: '14px' }}>No saved colleges yet. Go to the Colleges tab and save some!</p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+                    {savedColleges.map(c => (
+                      <div key={c.id} style={{ background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '12px', padding: '16px' }}>
+                        <h4 style={{ margin: '0 0 6px', color: '#f1f5f9', fontSize: '15px' }}>{c.name}</h4>
+                        <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px' }}>📍 {c.location} • ⭐ {c.rating}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ maxWidth: '380px', margin: '40px auto', background: '#0d1528', border: '1px solid #1e3a5f', borderRadius: '16px', padding: '28px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                  <button onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', background: authMode === 'login' ? '#2563eb' : '#1e293b', color: authMode === 'login' ? '#fff' : '#94a3b8' }}>
+                    Log In
+                  </button>
+                  <button onClick={() => setAuthMode('signup')} style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '13px', background: authMode === 'signup' ? '#2563eb' : '#1e293b', color: authMode === 'signup' ? '#fff' : '#94a3b8' }}>
+                    Sign Up
+                  </button>
+                </div>
+
+                {authMode === 'signup' && (
+                  <input placeholder="Name" value={authName} onChange={e => setAuthName(e.target.value)} style={inputStyle({ width: '100%', marginBottom: '10px', boxSizing: 'border-box' })} />
+                )}
+                <input placeholder="Email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={inputStyle({ width: '100%', marginBottom: '10px', boxSizing: 'border-box' })} />
+                <input placeholder="Password" type="password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} style={inputStyle({ width: '100%', marginBottom: '14px', boxSizing: 'border-box' })} />
+
+                {authError && <p style={{ color: authError.includes('created') ? '#4ade80' : '#f87171', fontSize: '13px', marginBottom: '12px' }}>{authError}</p>}
+
+                <button onClick={authMode === 'login' ? handleLogin : handleSignup} style={primaryBtnStyle({ width: '100%', padding: '11px' })}>
+                  {authMode === 'login' ? 'Log In' : 'Create Account'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
