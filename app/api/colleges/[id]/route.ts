@@ -1,41 +1,37 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma" // Corrected: Reuses our centralized database singleton
+import { NextResponse, NextRequest } from "next/server"
+import { prisma } from "@/lib/prisma"
 import { handleError } from "@/lib/apiError"
 
 export async function GET(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await context.params
-    const collegeId = parseInt(id)
-
-    if (isNaN(collegeId)) {
-      return NextResponse.json(
-        { error: "Invalid college ID" },
-        { status: 400 }
-      )
+    const id = parseInt(params.id)
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid college ID" }, { status: 400 })
     }
 
     const college = await prisma.college.findUnique({
-      where: { id: collegeId },
+      where: { id },
       include: {
         courses: true,
-        placements: true,
-        reviews: true,
-        cutoffs: true,
+        placements: { orderBy: { year: "desc" } },
+        cutoffs: { orderBy: { category: "asc" } },
+        reviews: {
+          include: { user: { select: { id: true, name: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 10
+        },
+        _count: { select: { reviews: true, savedBy: true } }
       }
     })
 
     if (!college) {
-      return NextResponse.json(
-        { error: "College not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "College not found" }, { status: 404 })
     }
 
-    return NextResponse.json(college)
-
+    return NextResponse.json({ data: college })
   } catch (error) {
     return handleError(error)
   }
